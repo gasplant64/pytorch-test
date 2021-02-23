@@ -41,6 +41,7 @@ class Setmodel:
     self.loss_func = nn.CrossEntropyLoss()
   def train(self , epoch  , bs , lr):
     num = (len(self.xtrain) - 1) // bs + 1
+    optim = opt.SGD(self.model.parameters() , lr = lr , momentum = 0.9)
     for epoch in range(epoch):
          tloss = 0
          for i in range(num):
@@ -51,12 +52,14 @@ class Setmodel:
             pred = self.model(xb)
             loss = self.loss_func(pred, yb)
             tloss += loss
-            
-            loss.backward()
-            with torch.no_grad():
-                for p in self.model.parameters():
-                    p -= p.grad * lr
-                self.model.zero_grad()
+            if optim is not None: 
+              loss.backward()
+              optim.step()
+              optim.zero_grad()
+            #with torch.no_grad():
+            #    for p in self.model.parameters():
+            #        p -= p.grad * lr
+            #    self.model.zero_grad()
          print('Epoch {0} Train Loss : {1}'.format( epoch+1 ,tloss/num) )
          if self.xvalid and self.yvalid:
            numv = (len(self.xvalid) - 1) // bs + 1
@@ -96,5 +99,5 @@ if __name__ == '__main__':
   fullmodel = Setmodel(model = test_model  , xtrain  = xt , ytrain  = yt)
   #### Train ###
   print(fullmodel.show())
-  fullmodel.train(epoch = 200 , bs = 3 , lr = 0.001)
+  fullmodel.train(epoch = 400 , bs = 3 , lr = 0.001)
   print(fullmodel.show())
