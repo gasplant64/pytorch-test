@@ -7,13 +7,15 @@ import torch
 
 
 def gen_num(length , split , num = 100):
-  xtmp = rd.randint(1,num , length)
+  xtmp = []
+  for _ in range(length):
+    xtmp.append(rd.randint(1,num))
   ytmp = []
   for i in xtmp: 
     if i % split == 0: ytmp.append(1)
     else: ytmp.append(0)
-  xdata = torch.tensor(xtmp , dtype = float)
-  ydata = torch.tensor(ytmp , dtype = float)
+  xdata = torch.tensor(xtmp , dtype = torch.float)
+  ydata = torch.tensor(ytmp)
   return xdata , ydata
 
 

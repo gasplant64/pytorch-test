@@ -37,6 +37,8 @@ class Setmodel:
     self.ytrain = ytrain
     self.xvalid = xvalid
     self.yvalid = yvalid
+    if isinstance(self.xvalid, torch.Tensor) and isinstance(self.yvalid , torch.Tensor):  self.valid = True
+    else: self.valid = False
     #LOSS function##
     self.loss_func = nn.CrossEntropyLoss()
   def train(self , epoch  , bs , lr):
@@ -60,21 +62,26 @@ class Setmodel:
             #    for p in self.model.parameters():
             #        p -= p.grad * lr
             #    self.model.zero_grad()
-         print('Epoch {0} Train Loss : {1}'.format( epoch+1 ,tloss/num) )
-         if self.xvalid and self.yvalid:
-           numv = (len(self.xvalid) - 1) // bs + 1
-           vloss = 0
-           for j in range(num):
-             start_j = j * bs
-             end_j = start_j + bs
-             xv = self.xvalid[start_j:end_j]
-             yv = self.yvalid[start_j:end_j]
-             pred = self.model(xv)
-             loss = self.loss_func(pred, yv)
-             vloss += loss
+         if epoch % 10 ==0: 
+           print('Epoch {0} Train Loss : {1}'.format( epoch+1 ,tloss/num) )
+           if self.valid:
+             numv = (len(self.xvalid) - 1) // bs + 1
+             vloss = 0
+             for j in range(numv):
+               start_j = j * bs
+               end_j = start_j + bs
+               xv = self.xvalid[start_j:end_j]
+               yv = self.yvalid[start_j:end_j]
+               pred = self.model(xv)
+               loss = self.loss_func(pred, yv)
+               vloss += loss
            print('Epoch {0} Valid Loss : {1}'.format( epoch+1 ,vloss/numv) )
   def show(self):
-    print('Accuracy is  :  {0}'.format(self.model.accuracy(self.xtrain , self.ytrain)))
+    if self.valid:
+      print('Accuracy(test) is  :  {0}'.format(self.model.accuracy(self.xtrain , self.ytrain)))
+      print('Accuracy(valid) is  :  {0}'.format(self.model.accuracy(self.xvalid , self.yvalid)))
+    else:
+      print('Accuracy is  :  {0}'.format(self.model.accuracy(self.xtrain , self.ytrain)))
   def save(self, dic):
     torch.save(self.model , dic)
 
