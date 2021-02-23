@@ -23,7 +23,7 @@ class normal(nn.Module):
     tmp = self.lay2(tmp)
     return tmp
   def accuracy(self, xb , yb):
-    print(self.forward(xb))
+    #print(self.forward(xb))
     pred = torch.argmax( self.forward(xb) , dim = 1)
     return (pred == yb).float().mean()
 
@@ -31,10 +31,12 @@ class normal(nn.Module):
 
 #elen(self.xtrain) - 1) // bs + 1# Classcco traning model ##
 class Setmodel:
-  def __init__(self, model , xtrain , ytrain):
+  def __init__(self, model , xtrain , ytrain , xvalid = False , yvalid = False):
     self.model = model
     self.xtrain = xtrain
     self.ytrain = ytrain
+    self.xvalid = xvalid
+    self.yvalid = yvalid
     #LOSS function##
     self.loss_func = nn.CrossEntropyLoss()
   def train(self , epoch  , bs , lr):
@@ -55,7 +57,19 @@ class Setmodel:
                 for p in self.model.parameters():
                     p -= p.grad * lr
                 self.model.zero_grad()
-         print('Epoch {0} Loss : {1}'.format( epoch+1 ,tloss/num) )
+         print('Epoch {0} Train Loss : {1}'.format( epoch+1 ,tloss/num) )
+         if self.xvalid and self.yvalid:
+           numv = (len(self.xvalid) - 1) // bs + 1
+           vloss = 0
+           for j in range(num):
+             start_j = j * bs
+             end_j = start_j + bs
+             xv = self.xvalid[start_j:end_j]
+             yv = self.yvalid[start_j:end_j]
+             pred = self.model(xv)
+             loss = self.loss_func(pred, yv)
+             vloss += loss
+           print('Epoch {0} Valid Loss : {1}'.format( epoch+1 ,vloss/numv) )
   def show(self):
     print('Accuracy is  :  {0}'.format(self.model.accuracy(self.xtrain , self.ytrain)))
 
@@ -82,5 +96,5 @@ if __name__ == '__main__':
   fullmodel = Setmodel(model = test_model  , xtrain  = xt , ytrain  = yt)
   #### Train ###
   print(fullmodel.show())
-  fullmodel.train(epoch = 200 , bs = 2 , lr = 0.005)
+  fullmodel.train(epoch = 200 , bs = 3 , lr = 0.001)
   print(fullmodel.show())
