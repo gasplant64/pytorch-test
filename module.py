@@ -11,11 +11,11 @@ import math
 
 ### DEFINE 1 Layer NN ##
 class normal(nn.Module):
-  def __init__(self, inputs , node , out ):
+  def __init__(self, inputs , nodes , outputs ):
     super().__init__()
-    self.inputs = inputs ; self.node = node
-    self.lay1 = nn.Linear(inputs, node)
-    self.lay2 = nn.Linear(node, out)
+    self.inputs = inputs ; self.nodes = nodes
+    self.lay1 = nn.Linear(inputs, nodes)
+    self.lay2 = nn.Linear(nodes, outputs)
   def forward(self, tmp):
     tmp = tmp.view(-1,self.inputs)
     tmp = self.lay1(tmp) 
@@ -75,6 +75,8 @@ class Setmodel:
            print('Epoch {0} Valid Loss : {1}'.format( epoch+1 ,vloss/numv) )
   def show(self):
     print('Accuracy is  :  {0}'.format(self.model.accuracy(self.xtrain , self.ytrain)))
+  def save(self, dic):
+    torch.save(self.model , dic)
 
 
 
@@ -82,16 +84,12 @@ class Setmodel:
 
 
 if __name__ == '__main__':
-  #inp = torch.randn(4)
-  #test = normal(inputs = 4, node = 5 , out = 4)
-  #print(inp.shape , test(inp))
   xt = torch.tensor([1,2,3,4,5,6,7,8,9] , dtype = torch.float)
-  #xt = torch.randn(9)
   print(xt)
   print(xt.shape)
   yt = torch.tensor([0,0,1,0,0,1,0,0,1])
   
-  test_model = normal(inputs = 1 , node = 10 , out = 2)
+  test_model = normal(inputs = 1 , nodes = 10 , outputs = 2)
   test_model(xt)
   print(test_model.accuracy(xt , yt))
   w = test_model
@@ -101,3 +99,4 @@ if __name__ == '__main__':
   print(fullmodel.show())
   fullmodel.train(epoch = 400 , bs = 3 , lr = 0.001)
   print(fullmodel.show())
+  fullmodel.save('test')
