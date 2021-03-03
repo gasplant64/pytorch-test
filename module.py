@@ -10,12 +10,15 @@ import math
 
 
 ### DEFINE 1 Layer NN ##
-class normal(nn.Module):
-  def __init__(self, inputs , nodes , outputs ):
+class Normal(nn.Module):
+  '''
+  This is module.normal
+  '''
+  def __init__(self, input_n , hidden_n , output_n ):
     super().__init__()
-    self.inputs = inputs ; self.nodes = nodes
-    self.lay1 = nn.Linear(inputs, nodes)
-    self.lay2 = nn.Linear(nodes, outputs)
+    self.inputs = input_n ; self.nodes = hidden_n
+    self.lay1 = nn.Linear(input_n, hidden_n)
+    self.lay2 = nn.Linear(hidden_n, output_n)
   def forward(self, tmp):
     tmp = tmp.view(-1,self.inputs)
     tmp = self.lay1(tmp) 
