@@ -1,0 +1,47 @@
+Data structure in pickle file
+
+'NNP_E' (added)
+--> energy of atoms in NNP 
+
+'struct_weight'
+--> traning weight of strcuture in NNP
+
+'partition_Sb'
+'partition_Ge'
+'partition_Te'
+'partition'
+--> atoms partition as array 1,1,1,1,1..
+
+'E'
+--> Total energy of atoms 
+
+'F'
+--> Force of atoms 
+
+'N'
+--> Number of elements!! as dirt
+
+'tot_num'
+--> total numbers of atoms 
+
+'S'
+--> ?? array([ 3.25201,  2.90949,  0.53739,  0.02764,  0.09684, -0.35957])
+
+'atom_idx'
+--> atomic index as  1, 2, 3 ...(in params_XX)
+
+'struct_type'
+--> name of structure 'h24_sig0.5'
+
+'params'
+--> SF parameters of elements
+
+'x'
+--> SF value as dict 'Sb' --> (atoms , symmetry functions) 2d numpy array!!!
+
+'dx'
+--> SF value derivatie ?? similar data structrue as 'x'
+
+'da'
+--> ??? SF value? similar data structrue as 'x' 
+dict['da']['Sb'].shape   --> (16, 132, 3, 6)
