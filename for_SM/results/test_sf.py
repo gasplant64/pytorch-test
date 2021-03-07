@@ -13,7 +13,7 @@ from ase import units
 import torch
 import pickle
 import six
-
+import yaml
 
 #load pickle file(tempoaray) at util.__init__
 def pickle_load(filename):
@@ -29,12 +29,18 @@ def read_params(filename):
     params_d = list()
     with open(filename, 'r') as fil:
         for line in fil:
-        tmp = line.split()
-        params_i += [list(map(int,   tmp[:3]))]
-        params_d += [list(map(float, tmp[3:]))]                
-        params_i = np.asarray(params_i, dtype=np.intc, order='C')
-        params_d = np.asarray(params_d, dtype=np.float64, order='C')  
+            tmp = line.split()
+            params_i += [list(map(int,   tmp[:3]))]
+            params_d += [list(map(float, tmp[3:]))]                
+            params_i = np.asarray(params_i, dtype=np.intc, order='C')
+            params_d = np.asarray(params_d, dtype=np.float64, order='C')  
     return params_i, params_d
+
+#Read yaml file 
+def read_yaml(filename):
+    with open(filename) as f:
+        output = yaml.load(f)
+    return output
 
 #testing temporary code
 if __name__ == '__main__':
