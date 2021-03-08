@@ -18,8 +18,6 @@ import numpy as np
 import math
 from math import pi
 
-
-
 ##### File processing #####
 #load pickle file(tempoaray) at util.__init__
 def pickle_load(filename):
