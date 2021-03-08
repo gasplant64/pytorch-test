@@ -20,7 +20,7 @@ from math import pi
 
 ##### File processing #####
 #load pickle file(tempoaray) at util.__init__
-def pickle_load(filename):
+def load_pickle(filename):
     with open(filename, 'rb') as f:
         if six.PY2:
             return pickle.load(f)
@@ -127,9 +127,102 @@ def generate_sf(index , param_d):
             return output
     return sym_func
 
+### OUTCAR Processing ###
+#Class that contains information of atoms in OUTCAR
+class Distance_atoms:
+    def __init__(self,atoms):
+        self.atom_sym = np.asarray(atoms.get_chemical_symbols())
+        atoms.pbc = True ##  Use PBC condition ##
+        self.atom_dist= atoms.get_all_distances(mic = True)           
+        ## Need to do --> PBC over three cell problematic : distance + lattice vector/2 ? 
+        self.atom_num_dict = dict()
+        for atom in self.atom_sym:
+            try:
+                self.atom_num_dict[atom] += 1
+            except:
+                self.atom_num_dict[atom] = 1
+        self.atom_index = list(self.atom_num_dict.keys())
 
-#Processing OUTCAR
+    def check_params(self):
+        print('Atom Sylbom',self.atom_sym)
+        print('Atom Distance matrix',self.atom_dist)
+        print('Atom index',self.atom_index)
+        print('Atom number dictionary',self.atom_num_dict)
 
+    def set_cutoff(self,cutoff):
+        self.cutoff = cutoff
+        self.bool_dist = self.atom_dist < cutoff
+
+    def get_g2_dist(self, num , index_i = False):
+        if index_i:
+            i_name = self.atom_index[index_i-1]
+            bool_list = self.bool_dist[num-1,:]
+            sym_list = self.atom_sym[bool_list]
+            dist_list = self.atom_dist[num-1, bool_list]
+            dist_out = dist_list[sym_list == i_name]
+            try: #remove self atom distance (zero)
+                dist_out = dist_out[dist_out != 0]
+                return dist_out
+            except:
+                return dist_out
+        else: #retrun all distance with all element 
+            sym_list = self.atom_sym[self.bool_dist[num-1,:]]
+            dist_out = self.atom_dist[num-1, self.bool_dist[num-1,:]]
+            try: 
+                sym_list = sym_list[dist_out != 0]
+                dist_out = dist_out[dist_out != 0]
+                return sym_list , dist_out
+            except:
+                return sym_list , dist_out
+
+    def _get_tri_dist(self, permut):
+        if permut != None:
+            i , j , k = permut
+            out = [self.atom_dist[i,j] , self.atom_dist[i,k],self.atom_dist[j,k]]
+        else:
+            out = None
+        return out
+
+    def get_g4_dist(self, num , index_i , index_j):
+        if index_i == index_j:
+            i_name = self.atom_index[index_i-1]
+            same = True
+        else:
+            i_name = self.atom_index[index_i-1]
+            j_name = self.atom_index[index_j-1]
+            same = False
+        bool_list = self.bool_dist[num-1,:]
+        dist_list = self.atom_dist[num-1,:]
+        #Define dictionary to use permutation distances 
+        permut_dict = dict()
+        for atom in self.atom_sym: #initialization
+            permut_dict[atom] = list()
+        for i , j in enumerate(bool_list):
+            if i != num-1 and j:
+                permut_dict[self.atom_sym[i]].append(i)
+        #Create permutation invariant list
+        permut_list = list()
+        if same:
+            atom_list = permut_dict[i_name]
+            length = len(permut_dict[i_name])
+            if length > 1: #length must be larger than 1
+                for i in range(length):
+                    for j in range(i+1,length):
+                        permut_list.append([num-1,atom_list[i],atom_list[j]])
+            else:
+                permut_list.append(None)
+        else:  ## different index of i & j
+            if any(permut_dict[i_name]) and any(permut_dict[j_name]):
+                for atom_i in permut_dict[i_name]:
+                    for atom_j in permut_dict[j_name]:
+                        permut_list.append([num-1,atom_i,atom_j])
+            else:
+                permut_list.append(None)
+        #Get distance of three atom
+        dist_out = list()
+        for permut in permut_list:
+            dist_out.append(self._get_tri_dist(permut))
+        return dist_out
 
 
 #Class that generate list of symmetry function 
@@ -152,16 +245,14 @@ if __name__ == '__main__':
     #_ , params_dir = get_params_dir('..\\input.yaml')
     #print(params_dir)
 
-
     #Check read parameters
     #par_i , par_d = read_params('..\\params_Ge')
     #print(par_i)
     #print(par_d)
 
     #Check open OUTCAR(VASP)
-    #outcar = open_outcar('OUTCAR_1')
+    outcar = open_outcar('OUTCAR_1')
     #print(outcar)
-
 
     # #Check SFs
     # print('CUTOFF FUNCTION')
@@ -181,9 +272,41 @@ if __name__ == '__main__':
     # ##All checked
 
     #Testing generate SF
-    test_g2 = generate_sf(index = 2,param_d=[6.0,0.003214 , 0.0 , 0.0])
-    print('Testing G2:  ',test_g2([2.0,1.0,3.0]))
-    test_g4 = generate_sf(index = 4,param_d=[6.0,0.089277, 1.0, -1.0])
-    test_g5 = generate_sf(index = 5,param_d=[6.0,0.089277, 1.0, -1.0])
-    print('Testing G4:  ',test_g4([[2.0,1.0,1.5],[2.0,1.0,2.5]]))
-    print('Testing G5:  ',test_g5([[2.0,1.0,1.5],[2.0,1.0,2.5]]))
+    test_g2 = generate_sf(index = 2,param_d=[6.0,0.003214 , 0.0 , 0.0])  # 1st
+    #print('Testing G2:  ',test_g2([2.0,1.0,3.0]))
+    test_g4 = generate_sf(index = 4,param_d=[6.0,0.089277, 1.0, -1.0])   # 45th
+    #test_g5 = generate_sf(index = 5,param_d=[6.0,0.089277, 1.0, -1.0])
+    #print('Testing G4:  ',test_g4([[2.0,1.0,1.5],[2.0,1.0,2.5]]))
+    #print('Testing G5:  ',test_g5([[2.0,1.0,1.5],[2.0,1.0,2.5]]))
+    
+    #Testing get distance from atoms
+    dist = Distance_atoms(outcar)
+    #dist.check_params()
+    dist.set_cutoff(6)
+    #print(dist.get_g2_dist(1,1))
+    #print(dist.get_g2_dist(1,2))
+    #print(dist.get_g2_dist(54))
+    #print(dist.get_g4_dist(54,1,2))
+    test2 = dist.get_g2_dist(52,1)
+    test4 = dist.get_g4_dist(52,1,3)
+    #print(test_g2(test2))
+    #print(test_g4(test4))
+    ### G2 SF Validation ###
+    cal_list = list()
+    for i in range(33,73):
+        cal_list.append(test_g2(dist.get_g2_dist(i,1)))
+    print('_'*60)
+    print('Calculated SF :',cal_list)
+    pickle1 = load_pickle('data1.pickle')
+    print('From pickled data',pickle1['x']['Te'][:,0])
+    print('_'*60)
+    ### G2 SF validation OK ###
+    ### G4 SF validation ###
+    cal_list = list()
+    for i in range(33,73):
+        cal_list.append(test_g4(dist.get_g4_dist(i,3,3)))
+    print('Calculated SF :',cal_list)
+    pickle1 = load_pickle('data1.pickle')
+    print('From pickled data',pickle1['x']['Te'][:,131])
+    ### G4 SF validation not already...
+
