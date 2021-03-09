@@ -79,7 +79,8 @@ def g2_ker(dist ,cutoff,eta , r_s = 0):
     return out
 
 #G4 symmetry functions 
-def g4_ker(dist_ij,dist_ik,dist_jk, angle ,cutoff,eta ,zeta ,lamda):
+def g4_ker(dist_ij,dist_ik,dist_jk, cutoff,eta ,zeta ,lamda):
+    angle = 180/pi*math.acos((dist_ij**2+dist_ik**2-dist_jk**2)/(2*dist_ij*dist_ik))
     out  = g2_ker(dist_ij, cutoff , eta)*g2_ker(dist_ik, cutoff , eta)*g2_ker(dist_jk, cutoff , eta)
     out *= (1 + lamda * math.cos(pi/180.0*angle))**zeta
     return out
@@ -110,13 +111,13 @@ def generate_sf(index , param_d):
             angle = 0
             # dist = [dist_ij,dist_ik ,dist_jk] type & angle generated
             for dist in dist_list:
-                angle = 180/pi*math.acos((dist[0]**2+dist[1]**2-dist[2]**2)/(2*dist[0]*dist[1]))
-                output += g4_ker(dist[0],dist[1],dist[2],angle,cutoff,eta ,zeta ,lamda)
+                if dist[2] < cutoff:  #Cufoff for distance Rjk
+                    output += g4_ker(dist[0],dist[1],dist[2],cutoff,eta ,zeta ,lamda)
             output *= 2.0**(1-zeta)
             return output
     elif index == 5: 
         eta = param_d[1]; zeta = param_d[2] ; lamda = param_d[2]
-        # G4 SF 
+        # G5 SF 
         def sym_func(dist_list):
             output = 0
             # dist = [dist_ij,dist_ik, dist_jk] type
@@ -222,7 +223,7 @@ class Distance_atoms:
         dist_out = list()
         for permut in permut_list:
             dist_out.append(self._get_tri_dist(permut))
-        return dist_out
+        return  dist_out
 
 
 #Class that generate list of symmetry function 
@@ -269,6 +270,7 @@ if __name__ == '__main__':
     # print('G4 & G5 FUNCTION')
     # print(g4_ker(dist_ij= 2 ,dist_ik= 2,dist_jk= 2, angle= 60 ,cutoff= 12,eta = 0.1 , zeta=1 , lamda = 0))
     # print(g5_ker(dist_ij= 2 ,dist_ik= 2, angle= 60 ,cutoff= 12,eta = 0.1 , zeta=1 , lamda = 0))
+    #print(g4_ker(dist_ij= 0.8 ,dist_ik= 0.8 ,dist_jk= 2, angle= 60 ,cutoff= 1 ,eta = 0.1 , zeta=1 , lamda = 0))
     # ##All checked
 
     #Testing generate SF
@@ -287,26 +289,28 @@ if __name__ == '__main__':
     #print(dist.get_g2_dist(1,2))
     #print(dist.get_g2_dist(54))
     #print(dist.get_g4_dist(54,1,2))
-    test2 = dist.get_g2_dist(52,1)
-    test4 = dist.get_g4_dist(52,1,3)
+    #test2 = dist.get_g2_dist(52,1)
+    #test4 = dist.get_g4_dist(52,1,3)
     #print(test_g2(test2))
-    #print(test_g4(test4))
+    #print(test4)
+    #Distance validated!!
+
     ### G2 SF Validation ###
-    cal_list = list()
-    for i in range(33,73):
-        cal_list.append(test_g2(dist.get_g2_dist(i,1)))
-    print('_'*60)
-    print('Calculated SF :',cal_list)
-    pickle1 = load_pickle('data1.pickle')
-    print('From pickled data',pickle1['x']['Te'][:,0])
-    print('_'*60)
+    #cal_list = list()
+    #for i in range(33,73):
+    #    cal_list.append(test_g2(dist.get_g2_dist(i,1)))
+    #print('_'*60)
+    #print('Calculated SF :',cal_list)
+    #pickle1 = load_pickle('data1.pickle')
+    #print('From pickled data',pickle1['x']['Te'][:,0])
     ### G2 SF validation OK ###
     ### G4 SF validation ###
     cal_list = list()
+    print('_'*60)
     for i in range(33,73):
-        cal_list.append(test_g4(dist.get_g4_dist(i,3,3)))
+        cal_list.append(test_g4(dist.get_g4_dist(i,1,1)))
     print('Calculated SF :',cal_list)
     pickle1 = load_pickle('data1.pickle')
-    print('From pickled data',pickle1['x']['Te'][:,131])
-    ### G4 SF validation not already...
+    print('From pickled data',pickle1['x']['Te'][:,26])
+    ### G4 SF validation not already... (Symmetry function not working)
 
